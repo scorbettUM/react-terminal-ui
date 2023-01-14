@@ -17,49 +17,17 @@ export interface Props {
   startingInputValue?: string
 }
 
-const Terminal = ({name, prompt, colorMode, onInput, children, startingInputValue = ""}: Props) => {
+const Terminal = ({name, colorMode, children, startingInputValue = ""}: Props) => {
   const [currentLineInput, setCurrentLineInput] = useState('');
-
-  const scrollIntoViewRef = useRef<HTMLDivElement>(null)
 
   const updateCurrentLineInput = (event: ChangeEvent<HTMLInputElement>) => {
     setCurrentLineInput(event.target.value);
-  }
-
-  const handleEnter = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (onInput != null && event.key === 'Enter') {
-      onInput(currentLineInput);
-      setCurrentLineInput('');
-    }
   }
 
   useEffect(() => {
     setCurrentLineInput(startingInputValue.trim());
   }, [startingInputValue]);
 
-  // An effect that handles scrolling into view the last line of terminal input or output
-  const performScrolldown = useRef(false);
-  useEffect(() => {
-    if (performScrolldown.current) { // skip scrolldown when the component first loads
-      setTimeout(() => scrollIntoViewRef?.current?.scrollIntoView({ behavior: "auto", block: "nearest" }), 500);
-    }
-    performScrolldown.current = true;
-  }, [children]);
-
-  // We use a hidden input to capture terminal input; make sure the hidden input is focused when clicking anywhere on the terminal
-  useEffect(() => {
-    if (onInput == null) {
-      return;
-    }
-    // keep reference to listeners so we can perform cleanup
-    const elListeners: { terminalEl: Element; listener: EventListenerOrEventListenerObject }[] = [];
-  
-    return function cleanup () {
-      elListeners.forEach(elListener => {
-        elListener.terminalEl.removeEventListener('click', elListener.listener);
-      });
-    }
-  }, [onInput]);
 
   const classes = ['react-terminal-wrapper'];
   if (colorMode === ColorMode.Light) {
@@ -69,10 +37,8 @@ const Terminal = ({name, prompt, colorMode, onInput, children, startingInputValu
     <div className={ classes.join(' ') } data-terminal-name={ name }>
       <div className="react-terminal">
         { children }
-        { onInput && <div className="react-terminal-line react-terminal-input react-terminal-active-input" data-terminal-prompt={ prompt || '$' } key="terminal-line-prompt" >{ currentLineInput }</div> }
-        <div ref={ scrollIntoViewRef }></div>
       </div>
-      <input className="terminal-hidden-input" placeholder="Terminal Hidden Input" value={ currentLineInput } onChange={ updateCurrentLineInput } onKeyDown={ handleEnter }/>
+      <input className="terminal-hidden-input" placeholder="Terminal Hidden Input" value={ currentLineInput } onChange={ updateCurrentLineInput } />
     </div>
   );
 }
